@@ -57,7 +57,6 @@ export class MockEngine {
   // ------------------------------------------------------------------ shims
   private build() {
     const st = this.state;
-    const self = this;
 
     class Range {
       constructor(private g: () => Grid, private r: number, private c: number, private nr = 1, private nc = 1) {}
@@ -124,11 +123,11 @@ export class MockEngine {
         newBlob: (bytes: number[]) => ({ getDataAsString: () => unsigned(bytes).toString("utf8") }),
         Charset: { UTF_8: "utf8" },
       },
-      UrlFetchApp: { fetch: (url: string, opt: { headers?: Record<string, string>; payload?: string }) => self.fetch(url, opt) },
+      UrlFetchApp: { fetch: (url: string, opt: { headers?: Record<string, string>; payload?: string }) => this.fetch(url, opt) },
       Gmail: {
         Users: {
           getProfile: () => ({ emailAddress: st.account }),
-          Messages: { send: (payload: { raw: string; threadId?: string }) => self.gmailSend(payload) },
+          Messages: { send: (payload: { raw: string; threadId?: string }) => this.gmailSend(payload) },
         },
       },
       GmailApp: {

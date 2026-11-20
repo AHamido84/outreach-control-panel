@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Apps Script engine + its Node test harness (CommonJS, not part of the app)
+    "apps-script/**",
   ]),
 ]);
 

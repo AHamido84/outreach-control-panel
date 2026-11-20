@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { assertSafeConfig, env } from "@/lib/env";
+import { ensureMockBootstrap } from "@/lib/mock/bootstrap";
 import { auth, isAllowed } from "./auth";
 
 export type User = { email: string; name?: string; role: "owner" | "admin" };
@@ -19,6 +20,7 @@ export async function currentUser(): Promise<User | null> {
 
 /** Pages: redirect to /login when not allowed. */
 export async function requireAdmin(): Promise<User> {
+  await ensureMockBootstrap(); // mock mode: demo companies exist before any page reads the registry
   const u = await currentUser();
   if (!u) redirect("/login");
   return u;
@@ -32,6 +34,7 @@ export async function requireOwner(): Promise<User> {
 
 /** Server actions / route handlers: throw instead of redirecting. */
 export async function assertAdmin(): Promise<User> {
+  await ensureMockBootstrap();
   const u = await currentUser();
   if (!u) throw new Forbidden("لازم تسجّل دخول بحساب مسموح له");
   return u;
