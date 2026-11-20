@@ -3,6 +3,8 @@ const fs = require('fs');
 const vm = require('vm');
 const data = JSON.parse(fs.readFileSync(__dirname + '/wb.json', 'utf8'));
 
+const OPTS = { userEntered: false };
+
 // ---------- Spreadsheet ----------
 class Range {
   constructor(sh, r, c, nr, nc) { Object.assign(this, { sh, r, c, nr: nr || 1, nc: nc || 1 }); }
@@ -23,6 +25,11 @@ class Sheet {
   put(r, c, v) {
     while (this.rows.length < r) this.rows.push([]);
     const row = this.rows[r - 1]; while (row.length < c) row.push('');
+    // opt-in: emulate Sheets' "user entered" parsing of setValue(s) — 'text stays text, numeric strings become numbers
+    if (OPTS.userEntered && typeof v === 'string') {
+      if (v.charAt(0) === "'") { row[c - 1] = v.slice(1); return; }
+      if (/^[+-]?\d+(\.\d+)?$/.test(v.trim())) { row[c - 1] = Number(v); return; }
+    }
     // Sheets turns yyyy-MM-dd strings into dates
     if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$/.test(v)) v = new Date(v.length > 10 ? v.replace(' ', 'T') + ':00Z' : v + 'T00:00:00Z');
     row[c - 1] = v;
@@ -130,4 +137,4 @@ function leadRows() {
 }
 function setCompany(label, v) { const sh = tab('Company'); sh.rows.forEach(r => { if (r[0] === label) r[1] = v; }); }
 function logRows() { return tab('Log').rows.slice(2).map(r => r.slice(1, 5).join(' | ')); }
-module.exports = { ctx, sheets, tab, leadRows, setCompany, logRows, sentMails, threads, mondayCalls, props, setEvents: e => { calEvents = e; } };
+module.exports = { OPTS, ctx, sheets, tab, leadRows, setCompany, logRows, sentMails, threads, mondayCalls, props, setEvents: e => { calEvents = e; } };

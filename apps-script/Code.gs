@@ -283,6 +283,8 @@ function importFromSheet() {
       lead['كود المصدر'] = src;
       lead['الإيميل'] = pickEmail_(lead['الإيميل'] || '', lead['الموقع'] || '');
       lead['الموقع'] = normalizeUrl_(lead['الموقع'] || '');
+      // نص عشان الشيت مايحوّلش 0501234567 لرقم ويضيع الصفر (setValues بيفسّر النص زي الكتابة اليدوي)
+      if (lead['التليفون']) lead['التليفون'] = "'" + String(lead['التليفون']).replace(/^'+/, '');
 
       var email = lead['الإيميل'], domain = domainOf_(lead['الموقع']);
       if (email && (known.emails[email] || (domain && known.domainsWithEmail[domain]))) { lead['حالة المعالجة'] = PROC.DUP; counts.dup++; }

@@ -10,7 +10,7 @@
 |---|---|
 | `apps-script/Code.gs` | محرك الإرسال v2 (جاهز ومتجرّب) — بيتلصق في Apps Script بتاع كل شيت |
 | `apps-script/appsscript.json` | الـ manifest (بيفعّل Gmail API) |
-| `apps-script/test/` | تيستات المحرك على شيت وهمي: `node test.js && node test-v2.js` |
+| `apps-script/test/` | تيستات المحرك على شيت وهمي: `node test.js && node test-v2.js && node test-phone.js` |
 | `reference/Outreach_Engine_Master.xlsx` | شكل الشيت (التابات والأعمدة) |
 | `PROMPT.md` | المطلوب بناؤه (للـ Claude Code) |
 
