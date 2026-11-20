@@ -101,6 +101,22 @@ export class CompanySheets {
     return (await this.read([tab], { fresh }))[tab];
   }
 
+  /** Raw values of a tab (row 1 first) — for tabs that are not a header table, like Import. */
+  async grid(tab: string, fresh = true): Promise<CellValue[][] | null> {
+    const meta = await this.meta();
+    if (!meta.tabs.includes(tab)) return null;
+    const [v] = await this.guard("batchGet", () => this.t.batchGet(this.id, [quoteTab(tab)]));
+    if (fresh) invalidate(this.id, tab);
+    return v;
+  }
+
+  /** Writes a rectangular block starting at an A1 cell (e.g. Import!A2). */
+  async writeBlock(tab: string, topLeft: string, values: CellValue[][], input: InputOption) {
+    if (!values.length) return;
+    await this.guard("batchUpdate", () => this.t.batchUpdate(this.id, [{ range: `${quoteTab(tab)}!${topLeft}`, values }], input));
+    invalidate(this.id, tab);
+  }
+
   /** Writes only the given cells. */
   async setCells(tab: string, changes: { row: number; header: string; value: CellValue }[], input: InputOption = "USER_ENTERED") {
     if (!changes.length) return;
