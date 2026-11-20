@@ -17,7 +17,7 @@ const T = ar.companies;
 type Co = { slug: string; name: string; color: string; sheetUrl: string; active: boolean; mondayAccount?: string; firstSendDate?: string; linked: boolean | null; alive: boolean };
 type Structure = { ok: boolean; missingTabs: string[]; missingHeaders: Record<string, string[]>; needsEngineSetup: boolean; title?: string };
 
-function StructureView({ s }: { s: Structure }) {
+export function StructureView({ s }: { s: Structure }) {
   if (s.ok) return <p className="text-sm text-emerald-700 dark:text-emerald-400">{T.structureOk}{s.title ? ` (${s.title})` : ""}</p>;
   return (
     <div className="grid gap-2 text-sm">
@@ -28,7 +28,7 @@ function StructureView({ s }: { s: Structure }) {
   );
 }
 
-function EngineKey({ slug, isOwner }: { slug: string; isOwner: boolean }) {
+export function EngineKey({ slug, isOwner }: { slug: string; isOwner: boolean }) {
   const [key, setKey] = useState<string | null>(null);
   const [res, setRes] = useState<Result | null>(null), [busy, setBusy] = useState(false);
   if (!isOwner) return <p className="text-xs text-muted-foreground">{T.engineKey}: {ar.appSettings.ownerOnly}</p>;

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { ar } from "@/content/ar";
 import { act, fail } from "@/lib/actions";
 import { assertAdmin, assertOwner } from "@/lib/auth/guards";
@@ -132,4 +133,14 @@ export async function writeAlertEmailToSheet(slug: string, emails: string) {
     await s.setCompany({ "إيميل التنبيهات": emails.split(/[\s,،;]+/).filter(Boolean).join(",") });
     return { ok: true as const, message: T.notifications.written(c.name) };
   });
+}
+
+/** Last step of the first-run wizard. */
+export async function completeSetup(slug: string) {
+  const r = await act(async () => {
+    await assertOwner();
+    await updateSettings((s) => { s.setupDone = true; });
+  });
+  if (r.ok) redirect(`/c/${slug}`);
+  return r;
 }
