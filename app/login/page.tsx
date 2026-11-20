@@ -16,7 +16,10 @@ function ConfigNeeded({ missing }: { missing: string[] }) {
           <CardDescription>التطبيق اتنشر، بس ناقصه متغيرات البيئة الأساسية. ضيفها في Vercel ← Project ← Settings ← Environment Variables، وبعدين اعمل Redeploy.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm">
-          <ul className="grid gap-1">{missing.map((k) => <li key={k}><code dir="ltr" className="rounded bg-muted px-1.5 py-0.5">{k}</code></li>)}</ul>
+          <ul className="grid gap-1">{missing.map((k) => (
+            <li key={k}><code dir="ltr" className="rounded bg-muted px-1.5 py-0.5">{k}</code>
+              {k.startsWith("UPSTASH") && <span className="text-xs text-muted-foreground"> (أو <code dir="ltr">{k.replace("UPSTASH_REDIS_REST_", "KV_REST_API_")}</code> — اللي Vercel بيحطه لوحده)</span>}</li>
+          ))}</ul>
           <p className="text-muted-foreground">Upstash بيتضاف من Vercel ← Storage (Marketplace) ← Upstash for Redis، وبيحط متغيراته لوحده. الشرح الكامل في README.</p>
           <p className="text-muted-foreground">عايز تشوف التطبيق ببيانات وهمية الأول؟ حط <code dir="ltr">MOCK_SHEETS=1</code> و <code dir="ltr">AUTH_DISABLED=1</code> (من غير بيانات حقيقية — وخلي Vercel Deployment Protection شغال).</p>
         </CardContent>
