@@ -34,6 +34,7 @@ export default async function DataPage({ params, searchParams }: { params: Promi
     const [all, dnc, company] = await Promise.all([readLeads(s), dncList(s), s.companyRows()]);
     d = { t, all, dnc, company };
   } catch (e) {
+    console.error(`[${slug}] page load failed:`, e);
     return <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6"><Notice result={{ ok: false, error: e instanceof SheetsError ? e.message : "مقدرناش نقرا الشيت", detail: (e as Error).message }} /></main>;
   }
   const { t, all, dnc, company } = d;
