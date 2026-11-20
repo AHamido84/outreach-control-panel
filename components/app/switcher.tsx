@@ -7,7 +7,7 @@ export function CompanySwitcher({ companies, current }: { companies: { slug: str
   const router = useRouter();
   if (!companies.length) return null;
   return (
-    <Select value={current ?? ""} onValueChange={(s) => router.push(`/c/${s}/settings`)}>
+    <Select value={current ?? ""} onValueChange={(s) => router.push(`/c/${s}`)}>
       <SelectTrigger size="sm" className="min-w-40" aria-label="الشركة">
         <SelectValue placeholder="اختار شركة" />
       </SelectTrigger>

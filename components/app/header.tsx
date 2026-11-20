@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLinkIcon, LogOutIcon, SettingsIcon, Building2Icon } from "lucide-react";
+import { ExternalLinkIcon, LogOutIcon, SettingsIcon, Building2Icon, TriangleAlertIcon } from "lucide-react";
 import { ar } from "@/content/ar";
 import { signOut } from "@/lib/auth/auth";
 import type { User } from "@/lib/auth/guards";
@@ -8,6 +8,8 @@ import { sheetsFor } from "@/lib/sheets";
 import { yes, type SystemInfo } from "@/lib/sheets/schema";
 import type { Company } from "@/lib/store/model";
 import { Button } from "@/components/ui/button";
+import { companyAlerts, type Alert } from "@/lib/sheets/insights";
+import { CompanyNav } from "./nav";
 import { CompanySwitcher } from "./switcher";
 import { heartbeatAgeMin } from "./shared";
 
@@ -40,7 +42,14 @@ export function StatusPills({ sys }: { sys: SystemInfo | null }) {
 
 export async function AppHeader({ user, companies, current }: { user: User; companies: Company[]; current?: Company }) {
   let sys: SystemInfo | null = null;
-  if (current) { try { sys = await (await sheetsFor(current)).system(); } catch { sys = null; } }
+  let alerts: Alert[] = [];
+  if (current) {
+    try {
+      const s = await sheetsFor(current);
+      sys = await s.system();
+      alerts = await companyAlerts(s, current.slug, sys);
+    } catch { sys = null; }
+  }
   return (
     <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
       {env.mockSheets && <div className="bg-amber-400/90 px-4 py-1 text-center text-xs font-medium text-amber-950">{ar.app.mock}</div>}
@@ -63,14 +72,16 @@ export async function AppHeader({ user, companies, current }: { user: User; comp
         </nav>
         {current && <div className="w-full"><StatusPills sys={sys} /></div>}
       </div>
-      {current && (
-        <div className="mx-auto max-w-6xl overflow-x-auto px-4">
-          <nav className="flex gap-1 pb-2 text-sm">
-            {([["", ar.nav.overview], ["data", ar.nav.data], ["send", ar.nav.send], ["status", ar.nav.status], ["activity", ar.nav.activity]] as const).map(([p, l]) => (
-              <span key={p} title={ar.nav.soon} className="cursor-not-allowed rounded-md px-2.5 py-1 whitespace-nowrap text-muted-foreground/60">{l}</span>
+      {current && <CompanyNav slug={current.slug} />}
+      {alerts.length > 0 && (
+        <div className="border-t bg-destructive/5">
+          <ul className="mx-auto grid max-w-6xl gap-1 px-4 py-1.5 text-sm">
+            {alerts.map((a) => (
+              <li key={a.kind} className="flex items-start gap-1.5 text-destructive">
+                <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" /> <Link href={a.href} className="hover:underline">{a.text}</Link>
+              </li>
             ))}
-            <Link href={`/c/${current.slug}/settings`} className="rounded-md bg-muted px-2.5 py-1 font-medium whitespace-nowrap">{ar.nav.settings}</Link>
-          </nav>
+          </ul>
         </div>
       )}
     </header>

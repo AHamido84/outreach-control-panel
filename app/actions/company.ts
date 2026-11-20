@@ -56,7 +56,7 @@ export async function saveRegistry(slug: string, patch: Partial<Pick<Company, "c
 /** Queues any engine command; returns its ID for polling. */
 export async function queueCommand(slug: string, type: CommandType, payload: Record<string, unknown> = {}) {
   return act(async () => {
-    const allowed: CommandType[] = ["checkSender", "sendTest", "testMonday", "setup", "heartbeat", "retryMonday"];
+    const allowed: CommandType[] = ["checkSender", "sendTest", "testMonday", "setup", "heartbeat", "retryMonday", "process"];
     if (!allowed.includes(type)) return fail("نوع أمر مش مسموح من هنا");
     const { s, user } = await load(slug);
     if (type === "sendTest" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(payload.to || ""))) return fail("اكتب إيميل صحيح للتجربة");
