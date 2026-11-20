@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { assertSafeConfig, env } from "@/lib/env";
+import { connection } from "next/server";
+import { assertSafeConfig, env, missingConfig } from "@/lib/env";
 import { ensureMockBootstrap } from "@/lib/mock/bootstrap";
 import { auth, isAllowed } from "./auth";
 
@@ -10,7 +11,9 @@ export class Forbidden extends Error {}
 
 /** The signed-in, allowed user — or null. Re-checks the allowed list on every request. */
 export async function currentUser(): Promise<User | null> {
+  await connection(); // always per request: config, session and sheet data are never prerendered at build time
   assertSafeConfig();
+  if (missingConfig().length) return null; // → /login, which explains what to configure
   if (env.authDisabled) return { email: env.ownerEmail, name: "Owner (mock)", role: "owner" };
   const s = await auth();
   const email = s?.user?.email?.toLowerCase();
@@ -20,6 +23,8 @@ export async function currentUser(): Promise<User | null> {
 
 /** Pages: redirect to /login when not allowed. */
 export async function requireAdmin(): Promise<User> {
+  await connection();
+  if (missingConfig().length) redirect("/login");
   await ensureMockBootstrap(); // mock mode: demo companies exist before any page reads the registry
   const u = await currentUser();
   if (!u) redirect("/login");

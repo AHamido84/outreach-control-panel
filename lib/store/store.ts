@@ -36,7 +36,8 @@ class UpstashStore implements Store {
 /** Local development fallback: one JSON file in .data/. */
 class FileStore implements Store {
   readonly kind = "file" as const;
-  private file = path.join(process.cwd(), ".data", "store.json");
+  // Vercel's filesystem is read-only except /tmp (mock previews only — real deployments use Upstash)
+  private file = process.env.VERCEL ? "/tmp/ocp-data/store.json" : path.join(process.cwd(), ".data", "store.json");
   private chain: Promise<unknown> = Promise.resolve();
 
   private async load(): Promise<Record<string, { v: unknown; exp?: number }>> {
