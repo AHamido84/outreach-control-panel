@@ -1,5 +1,7 @@
 import "server-only";
 
+const clean = (v: string | undefined) => (v || "").trim().replace(/^["']|["']$/g, "").trim();
+
 /** Bootstrap env only. Everything else is configured from the UI. */
 export const env = {
   get mockSheets() {
@@ -18,11 +20,12 @@ export const env = {
   get ownerEmail() {
     return (process.env.OWNER_EMAIL || (this.mockSheets ? "owner@mock.local" : "")).trim().toLowerCase();
   },
+  // trimmed: a value pasted into Vercel with a stray space/newline/quotes makes Google answer "OAuth client was not found"
   get googleClientId() {
-    return process.env.AUTH_GOOGLE_ID || "";
+    return clean(process.env.AUTH_GOOGLE_ID);
   },
   get googleClientSecret() {
-    return process.env.AUTH_GOOGLE_SECRET || "";
+    return clean(process.env.AUTH_GOOGLE_SECRET);
   },
   get upstash() {
     const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
