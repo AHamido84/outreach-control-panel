@@ -1,15 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { currentUser } from "@/lib/auth/guards";
+import { assertCompany } from "@/lib/auth/guards";
 import { invalidate, sheetsFor } from "@/lib/sheets";
 import { leads, sendResults } from "@/lib/sheets/queries";
-import { getCompany } from "@/lib/store/model";
 
 /** Recent send commands + Send Results rows of one command + monday item ids of those leads. Polled by the results panel. */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
-  if (!(await currentUser())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { slug } = await ctx.params;
-  const c = await getCompany(slug);
-  if (!c) return NextResponse.json({ error: "not found" }, { status: 404 });
+  let c;
+  try { c = (await assertCompany(slug)).company; } catch { return NextResponse.json({ error: "forbidden" }, { status: 403 }); }
   try {
     const s = await sheetsFor(c);
     const all = await s.commands();

@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { act, fail } from "@/lib/actions";
-import { assertAdmin } from "@/lib/auth/guards";
+import { assertCompany } from "@/lib/auth/guards";
 import { sheetsFor } from "@/lib/sheets";
 import { yes } from "@/lib/sheets/schema";
-import { getCompany } from "@/lib/store/model";
 
 export type SendInput = {
   count: number;
@@ -19,9 +18,7 @@ export type SendInput = {
 };
 
 async function load(slug: string) {
-  const user = await assertAdmin();
-  const c = await getCompany(slug);
-  if (!c) throw new Error("الشركة مش موجودة: " + slug);
+  const { user, company: c } = await assertCompany(slug);
   return { user, c, s: await sheetsFor(c) };
 }
 

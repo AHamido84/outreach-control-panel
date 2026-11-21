@@ -2,17 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { act, fail } from "@/lib/actions";
-import { assertAdmin } from "@/lib/auth/guards";
+import { assertCompany } from "@/lib/auth/guards";
 import { sheetsFor } from "@/lib/sheets";
 import { addDnc, clearImport, LEAD_EDITABLE, pendingOfType, removeDnc, updateLead, updateLeads, writeImportChunk } from "@/lib/sheets/queries";
 import { TAB } from "@/lib/sheets/schema";
-import { getCompany } from "@/lib/store/model";
 import { store } from "@/lib/store/store";
 
 async function load(slug: string) {
-  const user = await assertAdmin();
-  const c = await getCompany(slug);
-  if (!c) throw new Error("الشركة مش موجودة: " + slug);
+  const { user, company: c } = await assertCompany(slug);
   return { user, c, s: await sheetsFor(c) };
 }
 const revalidate = (slug: string) => { revalidatePath(`/c/${slug}`, "layout"); };

@@ -3,12 +3,11 @@ import { AppHeader } from "@/components/app/header";
 import { UrlTabs } from "@/components/app/basics";
 import { AccessSection, DefaultsSection, GoogleSection, NotificationsSection } from "@/components/settings/app-sections";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireUser, visibleCompanies } from "@/lib/auth/guards";
 import { APP_VERSION, env } from "@/lib/env";
 import { sheetsFor } from "@/lib/sheets";
-import { getSettings, listCompanies, recentGoogleErrors, secretInfo, storeKind } from "@/lib/store/model";
+import { getSettings, recentGoogleErrors, secretInfo, storeKind } from "@/lib/store/model";
 
 const T = ar.appSettings;
 const FLASH: Record<string, string> = {
@@ -17,11 +16,11 @@ const FLASH: Record<string, string> = {
 };
 
 export default async function AppSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string; error?: string; connected?: string; denied?: string }> }) {
-  const user = await requireAdmin();
+  const user = await requireUser();
   const sp = await searchParams;
-  const isOwner = user.role === "owner";
+  const isOwner = true; // everyone who can sign in has full permissions
   const [settings, companies, errors, rt, sa] = await Promise.all([
-    getSettings(), listCompanies(), recentGoogleErrors(),
+    getSettings(), visibleCompanies(user), recentGoogleErrors(),
     secretInfo({ scope: "app", name: "googleRefreshToken" }), secretInfo({ scope: "app", name: "serviceAccountJson" }),
   ]);
   // current «إيميل التنبيهات» per company (best effort)
@@ -30,7 +29,6 @@ export default async function AppSettingsPage({ searchParams }: { searchParams: 
   }));
   const flash = sp.connected ? { ok: true as const, message: "Google Sheets اتوصّل ✓" } : sp.error ? { ok: false as const, error: FLASH[sp.error] || "فشل الربط", detail: sp.error } : null;
   const tab = sp.tab && Object.keys(T.tabs).includes(sp.tab) ? sp.tab : "google";
-  const ownerBadge = (l: string) => <span className="inline-flex items-center gap-1">{l} <Badge variant="outline" className="text-[10px]">{T.ownerOnly}</Badge></span>;
 
   return (
     <>
@@ -43,7 +41,7 @@ export default async function AppSettingsPage({ searchParams }: { searchParams: 
           { value: "notifications", label: T.tabs.notifications }, { value: "diagnostics", label: T.tabs.diagnostics },
         ]}>
           <TabsContent value="google">
-            <Card><CardHeader><CardTitle>{ownerBadge(T.google.title)}</CardTitle><CardDescription>{T.google.desc}</CardDescription></CardHeader>
+            <Card><CardHeader><CardTitle>{T.google.title}</CardTitle><CardDescription>{T.google.desc}</CardDescription></CardHeader>
               <CardContent>
                 <GoogleSection isOwner={isOwner} mock={env.mockSheets} mode={settings.google.mode} oauthEmail={settings.google.oauthEmail}
                   saEmail={settings.google.serviceAccountEmail} connectedAt={settings.google.connectedAt} refreshToken={rt} saInfo={sa}
@@ -51,8 +49,8 @@ export default async function AppSettingsPage({ searchParams }: { searchParams: 
               </CardContent></Card>
           </TabsContent>
           <TabsContent value="access">
-            <Card><CardHeader><CardTitle>{ownerBadge(T.access.title)}</CardTitle><CardDescription>{T.access.desc}</CardDescription></CardHeader>
-              <CardContent><AccessSection isOwner={isOwner} owner={env.ownerEmail} admins={settings.admins} /></CardContent></Card>
+            <Card><CardHeader><CardTitle>{T.access.title}</CardTitle><CardDescription>الدخول بصلاحية الشيت في Google Sheets</CardDescription></CardHeader>
+              <CardContent><AccessSection owner={env.ownerEmail} companies={companies.map((c) => ({ name: c.name, sheetUrl: c.sheetUrl }))} /></CardContent></Card>
           </TabsContent>
           <TabsContent value="defaults">
             <Card><CardHeader><CardTitle>{T.defaults.title}</CardTitle><CardDescription>{T.defaults.desc}</CardDescription></CardHeader>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ar } from "@/content/ar";
 import { act, fail } from "@/lib/actions";
-import { assertAdmin, assertOwner } from "@/lib/auth/guards";
+import { assertCompany, assertUser } from "@/lib/auth/guards";
 import { newEngineKey } from "@/lib/crypto/seal";
 import { env } from "@/lib/env";
 import { mockEngine } from "@/lib/mock/transport";
@@ -26,7 +26,7 @@ export type NewCompany = { name: string; slug?: string; sheetUrl: string; color:
 
 export async function addCompany(input: NewCompany) {
   return act(async () => {
-    await assertAdmin();
+    await assertUser();
     const name = input.name.trim();
     if (!name) return fail("اكتب اسم الشركة");
     const sheetId = sheetIdFromUrl(input.sheetUrl);
@@ -63,9 +63,7 @@ export async function addCompany(input: NewCompany) {
 
 export async function updateCompany(slug: string, patch: Partial<Omit<Company, "slug" | "createdAt" | "updatedAt">>) {
   return act(async () => {
-    await assertAdmin();
-    const c = await getCompany(slug);
-    if (!c) return fail("الشركة مش موجودة");
+    const { company: c } = await assertCompany(slug);
     const next = { ...c, ...patch };
     if (patch.sheetUrl !== undefined) {
       const id = sheetIdFromUrl(patch.sheetUrl);
@@ -79,9 +77,7 @@ export async function updateCompany(slug: string, patch: Partial<Omit<Company, "
 
 export async function testCompany(slug: string) {
   return act(async () => {
-    await assertAdmin();
-    const c = await getCompany(slug);
-    if (!c) return fail("الشركة مش موجودة");
+    const { company: c } = await assertCompany(slug);
     const s = await sheetsFor(c);
     const structure = await s.validateStructure();
     const system = structure.needsEngineSetup ? null : await s.system(true);
@@ -91,14 +87,14 @@ export async function testCompany(slug: string) {
 
 export async function revealEngineKey(slug: string) {
   return act(async () => {
-    await assertOwner();
+    await assertCompany(slug);
     return ensureEngineKey(slug);
   });
 }
 
 export async function regenerateEngineKey(slug: string) {
   return act(async () => {
-    await assertOwner();
+    await assertCompany(slug);
     const k = newEngineKey();
     await setSecret(engineKeyOf(slug), k);
     return k;
@@ -106,14 +102,14 @@ export async function regenerateEngineKey(slug: string) {
 }
 
 export async function listCompaniesAction() {
-  await assertAdmin();
+  await assertUser();
   return listCompanies();
 }
 
 /** Mock mode only: do what the owner would do by hand in the sheet. */
 export async function mockSimulate(slug: string, what: "setup" | "link") {
   return act(async () => {
-    await assertOwner();
+    await assertUser();
     if (!env.mockSheets) return fail("متاح في الوضع التجريبي بس");
     const c = await getCompany(slug);
     if (!c) return fail("الشركة مش موجودة");

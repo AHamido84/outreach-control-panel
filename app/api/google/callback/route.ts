@@ -8,7 +8,7 @@ import { setSecret, updateSettings, recordGoogleError } from "@/lib/store/model"
 export async function GET(req: NextRequest) {
   const back = (q: string) => NextResponse.redirect(new URL("/settings?tab=google&" + q, req.url));
   const u = await currentUser();
-  if (!u || u.role !== "owner") return back("error=owner");
+  if (!u) return back("error=owner");
   const jar = await cookies();
   const state = jar.get("ocp_google_state")?.value;
   jar.delete("ocp_google_state");

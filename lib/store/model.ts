@@ -73,7 +73,8 @@ const K = {
 
 export type SecretName =
   | { scope: "app"; name: "googleRefreshToken" | "serviceAccountJson" }
-  | { scope: `company:${string}`; name: "engineKey" | "mondayToken" };
+  | { scope: `company:${string}`; name: "engineKey" | "mondayToken" }
+  | { scope: `user:${string}`; name: "googleRefreshToken" };
 
 // ============================== settings ==============================
 

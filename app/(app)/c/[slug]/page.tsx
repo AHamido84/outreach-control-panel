@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { FileUpIcon, EyeIcon, MailCheckIcon, RefreshCwIcon } from "lucide-react";
 import { Notice } from "@/components/app/basics";
 import { CommandButton } from "@/components/app/command";
@@ -7,12 +6,11 @@ import { toStr } from "@/components/app/shared";
 import { BarList, DailyBars, Stat } from "@/components/charts";
 import { StatusBadge } from "@/components/data/badges";
 import { Button } from "@/components/ui/button";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { boardIdOf_ } from "@/lib/engine-port";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor } from "@/lib/sheets";
 import { overview } from "@/lib/sheets/insights";
-import { getCompany } from "@/lib/store/model";
 import { fmtInTz } from "@/lib/tz";
 
 const pct = (x: number) => `${Math.round(x * 1000) / 10}%`;
@@ -27,10 +25,8 @@ function Card({ title, children, action }: { title: string; children: React.Reac
 }
 
 export default async function Overview({ params }: { params: Promise<{ slug: string }> }) {
-  await requireAdmin();
   const { slug } = await params;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c } = await requireCompany(slug);
   let o, tz = "Asia/Riyadh";
   try {
     const s = await sheetsFor(c);

@@ -1,22 +1,18 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Notice, UrlTabs } from "@/components/app/basics";
 import { toStr } from "@/components/app/shared";
 import { CommandsTable } from "@/components/activity/commands-table";
 import { StatusBadge } from "@/components/data/badges";
 import { TabsContent } from "@/components/ui/tabs";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor } from "@/lib/sheets";
 import { logRows } from "@/lib/sheets/queries";
-import { getCompany } from "@/lib/store/model";
 
 export default async function ActivityPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; status?: string; type?: string }> }) {
-  await requireAdmin();
   const { slug } = await params;
   const sp = await searchParams;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c } = await requireCompany(slug);
   let d;
   try {
     const s = await sheetsFor(c);

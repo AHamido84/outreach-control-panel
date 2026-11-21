@@ -4,12 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ar } from "@/content/ar";
 import { act, fail } from "@/lib/actions";
-import { assertAdmin, assertOwner } from "@/lib/auth/guards";
-import { env } from "@/lib/env";
+import { assertCompany, assertUser } from "@/lib/auth/guards";
 import { sheetsFor } from "@/lib/sheets";
 import { TAB } from "@/lib/sheets/schema";
 import {
-  deleteSecret, getCompany, setSecret, updateSettings, DEFAULT_DEFAULTS, type Defaults, type GoogleMode,
+  deleteSecret, setSecret, updateSettings, DEFAULT_DEFAULTS, type Defaults, type GoogleMode,
 } from "@/lib/store/model";
 
 const T = ar.appSettings;
@@ -19,7 +18,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function setGoogleMode(mode: GoogleMode) {
   return act(async () => {
-    await assertOwner();
+    await assertUser();
     await updateSettings((s) => { s.google.mode = mode; });
     revalidatePath("/settings");
   }, ar.common.saved);
@@ -27,7 +26,7 @@ export async function setGoogleMode(mode: GoogleMode) {
 
 export async function saveServiceAccount(json: string) {
   return act(async () => {
-    await assertOwner();
+    await assertUser();
     let j: { client_email?: string; private_key?: string; type?: string };
     try { j = JSON.parse(json); } catch { return fail(T.google.badJson); }
     if (!j.client_email || !j.private_key) return fail(T.google.badJson);
@@ -39,7 +38,7 @@ export async function saveServiceAccount(json: string) {
 
 export async function disconnectGoogle() {
   return act(async () => {
-    await assertOwner();
+    await assertUser();
     const s = await updateSettings((s) => {
       if (s.google.mode === "oauth") { s.google.oauthEmail = undefined; } else { s.google.serviceAccountEmail = undefined; }
       s.google.connectedAt = undefined;
@@ -52,9 +51,7 @@ export async function disconnectGoogle() {
 /** Reads one cell (Company!A1) from a company sheet. */
 export async function testGoogle(slug: string) {
   return act(async () => {
-    await assertAdmin();
-    const c = await getCompany(slug);
-    if (!c) return fail("الشركة مش موجودة");
+    const { company: c } = await assertCompany(slug);
     const s = await sheetsFor(c);
     const meta = await s.meta(true);
     await s.table(TAB.COMPANY, true);
@@ -62,38 +59,11 @@ export async function testGoogle(slug: string) {
   });
 }
 
-// ------------------------------------------------------------------ access (owner)
-
-export async function addAdmin(email: string) {
-  return act(async () => {
-    await assertOwner();
-    const e = email.trim().toLowerCase();
-    if (!EMAIL.test(e)) return fail(T.access.invalid);
-    let exists = false;
-    await updateSettings((s) => {
-      if (e === env.ownerEmail || s.admins.includes(e)) { exists = true; return; }
-      s.admins.push(e);
-    });
-    if (exists) return fail(T.access.exists);
-    revalidatePath("/settings");
-  }, T.access.added);
-}
-
-export async function removeAdmin(email: string) {
-  return act(async () => {
-    await assertOwner();
-    const e = email.trim().toLowerCase();
-    if (e === env.ownerEmail) return fail("صاحب الحساب مايتشالش");
-    await updateSettings((s) => { s.admins = s.admins.filter((a) => a !== e); });
-    revalidatePath("/settings");
-  }, T.access.removed);
-}
-
 // ------------------------------------------------------------------ defaults / notifications (admins)
 
 export async function saveDefaults(d: Defaults) {
   return act(async () => {
-    await assertAdmin();
+    await assertUser();
     const clean: Defaults = {
       dailyCap: Math.max(1, Math.round(Number(d.dailyCap) || DEFAULT_DEFAULTS.dailyCap)),
       days: d.days.length ? d.days : DEFAULT_DEFAULTS.days,
@@ -113,7 +83,7 @@ export async function saveDefaults(d: Defaults) {
 
 export async function saveNotificationEmails(text: string) {
   return act(async () => {
-    await assertAdmin();
+    await assertUser();
     const emails = [...new Set(text.split(/[\s,،;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
     const bad = emails.filter((e) => !EMAIL.test(e));
     if (bad.length) return fail(T.access.invalid, bad.join(", "));
@@ -125,9 +95,7 @@ export async function saveNotificationEmails(text: string) {
 /** Writes the alert email(s) into the Company tab's «إيميل التنبيهات» so the engine sends reply/booking summaries. */
 export async function writeAlertEmailToSheet(slug: string, emails: string) {
   return act(async () => {
-    await assertAdmin();
-    const c = await getCompany(slug);
-    if (!c) return fail("الشركة مش موجودة");
+    const { company: c } = await assertCompany(slug);
     const s = await sheetsFor(c);
     // MailApp.sendEmail accepts a comma-separated list
     await s.setCompany({ "إيميل التنبيهات": emails.split(/[\s,،;]+/).filter(Boolean).join(",") });
@@ -138,7 +106,7 @@ export async function writeAlertEmailToSheet(slug: string, emails: string) {
 /** Last step of the first-run wizard. */
 export async function completeSetup(slug: string) {
   const r = await act(async () => {
-    await assertOwner();
+    await assertUser();
     await updateSettings((s) => { s.setupDone = true; });
   });
   if (r.ok) redirect(`/c/${slug}`);

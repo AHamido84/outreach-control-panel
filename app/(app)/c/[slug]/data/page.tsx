@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Notice, UrlTabs } from "@/components/app/basics";
 import { toStr } from "@/components/app/shared";
 import { DncManager } from "@/components/data/dnc";
@@ -9,22 +8,19 @@ import { Section } from "@/components/settings/company-sections";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { boardIdOf_ } from "@/lib/engine-port";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor } from "@/lib/sheets";
 import { dncList, filterLeads, leads as readLeads, type LeadFilter } from "@/lib/sheets/queries";
 import { LEAD_BASE_COLS, TAB } from "@/lib/sheets/schema";
-import { getCompany } from "@/lib/store/model";
 
 const PAGE = 50;
 type SP = LeadFilter & { tab?: string; page?: string };
 
 export default async function DataPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<SP> }) {
-  await requireAdmin();
   const { slug } = await params;
   const sp = await searchParams;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c } = await requireCompany(slug);
   const tab = ["import", "leads", "dnc"].includes(sp.tab || "") ? sp.tab! : "leads";
 
   let d;
