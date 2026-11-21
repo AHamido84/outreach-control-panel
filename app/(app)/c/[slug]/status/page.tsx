@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ExternalLinkIcon } from "lucide-react";
 import { Notice, UrlTabs, Warn } from "@/components/app/basics";
 import { CommandButton } from "@/components/app/command";
@@ -7,13 +6,12 @@ import { nowMs, toStr } from "@/components/app/shared";
 import { gmailLink, MondayMark, mondayItemLink, StatusBadge } from "@/components/data/badges";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { boardIdOf_ } from "@/lib/engine-port";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor } from "@/lib/sheets";
 import { attention } from "@/lib/sheets/insights";
 import { leads as readLeads, type Lead } from "@/lib/sheets/queries";
-import { getCompany } from "@/lib/store/model";
 import { fmtInTz } from "@/lib/tz";
 
 const PAGE = 50;
@@ -36,11 +34,9 @@ function LeadMini({ list, slug, empty }: { list: Lead[]; slug: string; empty: st
 }
 
 export default async function StatusPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; s?: string; page?: string }> }) {
-  await requireAdmin();
   const { slug } = await params;
   const sp = await searchParams;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c } = await requireCompany(slug);
   let d;
   try {
     const s = await sheetsFor(c);

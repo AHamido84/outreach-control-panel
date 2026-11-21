@@ -9,18 +9,18 @@ import { MondayTab } from "@/components/settings/company-sections-2";
 import { GoogleSection } from "@/components/settings/app-sections";
 import { FinishStep, FirstCompanyStep, StepShell, WaitStep } from "@/components/setup/shell";
 import { Button } from "@/components/ui/button";
-import { requireOwner } from "@/lib/auth/guards";
+import { requireUser, visibleCompanies } from "@/lib/auth/guards";
 import { env } from "@/lib/env";
 import { sheetsFor } from "@/lib/sheets";
 import { COMPANY_KEYS, TAB } from "@/lib/sheets/schema";
-import { getCompany, getSettings, listCompanies, mondayTokenOf, secretInfo } from "@/lib/store/model";
+import { getCompany, getSettings, mondayTokenOf, secretInfo } from "@/lib/store/model";
 
 /** First-run wizard (owner only). Each step is server-rendered from ?step=&c=. */
 export default async function SetupPage({ searchParams }: { searchParams: Promise<{ step?: string; c?: string }> }) {
-  const user = await requireOwner();
+  const user = await requireUser();
   const sp = await searchParams;
   const step = Math.min(6, Math.max(1, Number(sp.step) || 1));
-  const [settings, companies] = await Promise.all([getSettings(), listCompanies()]);
+  const [settings, companies] = await Promise.all([getSettings(), visibleCompanies(user)]);
   const company = sp.c ? await getCompany(sp.c) : null;
   const next = (n: number) => `/setup?step=${n}${company ? `&c=${company.slug}` : ""}`;
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ar } from "@/content/ar";
 import { act, fail } from "@/lib/actions";
-import { assertAdmin } from "@/lib/auth/guards";
+import { assertCompany, assertUser } from "@/lib/auth/guards";
 import { seal } from "@/lib/crypto/seal";
 import { checkDomain } from "@/lib/dns/check";
 import { boardIdOf_ } from "@/lib/engine-port";
@@ -13,15 +13,13 @@ import { validateMondayToken } from "@/lib/monday/api";
 import { sheetsFor } from "@/lib/sheets";
 import { CONTENT_TABS, TAB, type CommandType } from "@/lib/sheets/schema";
 import {
-  ensureEngineKey, getCompany, mondayTokenOf, removeCompany, saveCompany, secretInfo, setSecret, type Company,
+  ensureEngineKey, mondayTokenOf, removeCompany, saveCompany, secretInfo, setSecret, type Company,
 } from "@/lib/store/model";
 
 const T = ar.companySettings;
 
 async function load(slug: string) {
-  const user = await assertAdmin();
-  const c = await getCompany(slug);
-  if (!c) throw new Error("الشركة مش موجودة: " + slug);
+  const { user, company: c } = await assertCompany(slug);
   return { user, c, s: await sheetsFor(c) };
 }
 
@@ -76,7 +74,7 @@ export async function cancelCommand(slug: string, id: string) {
 
 export async function checkDeliverability(domain: string, selector?: string) {
   return act(async () => {
-    await assertAdmin();
+    await assertUser();
     if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain.replace(/^.*@/, ""))) return fail("الدومين مش صحيح");
     return checkDomain(domain, selector);
   });
@@ -114,7 +112,7 @@ export async function saveMondayBoard(slug: string, board: string, account: stri
 }
 
 export async function mondayTokenInfo(slug: string) {
-  await assertAdmin();
+  await assertCompany(slug);
   return secretInfo(mondayTokenOf(slug));
 }
 

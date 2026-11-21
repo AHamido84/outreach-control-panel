@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@/lib/auth/guards";
+import { assertCompany } from "@/lib/auth/guards";
 import { invalidate, sheetsFor } from "@/lib/sheets";
-import { getCompany } from "@/lib/store/model";
 
 /** Polled by the UI while a command is pending/running. */
 export async function GET(_req: Request, ctx: { params: Promise<{ slug: string; id: string }> }) {
-  if (!(await currentUser())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { slug, id } = await ctx.params;
-  const c = await getCompany(slug);
-  if (!c) return NextResponse.json({ error: "not found" }, { status: 404 });
+  let c;
+  try { c = (await assertCompany(slug)).company; } catch { return NextResponse.json({ error: "forbidden" }, { status: 403 }); }
   try {
     const s = await sheetsFor(c);
     const cmd = await s.command(id);

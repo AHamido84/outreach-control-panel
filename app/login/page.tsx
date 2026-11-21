@@ -42,10 +42,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           <CardDescription>{ar.login.body}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          {error && <p role="alert" className="text-sm text-destructive">{ar.login.denied}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error === "noaccess" ? ar.login.noaccess : error === "scope" ? ar.login.scope : ar.login.denied}</p>}
           <form action={async () => { "use server"; await signIn("google", { redirectTo: "/" }); }}>
             <Button className="w-full" size="lg">{ar.login.button}</Button>
           </form>
+          <p className="text-xs text-muted-foreground">{ar.login.note}</p>
         </CardContent>
       </Card>
     </main>

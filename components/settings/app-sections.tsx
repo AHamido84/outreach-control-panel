@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2Icon, TrashIcon, UploadIcon } from "lucide-react";
+import { Loader2Icon, UploadIcon } from "lucide-react";
 import { ar } from "@/content/ar";
 import {
-  addAdmin, disconnectGoogle, removeAdmin, saveDefaults, saveNotificationEmails, saveServiceAccount, setGoogleMode, testGoogle, writeAlertEmailToSheet,
+  disconnectGoogle, saveDefaults, saveNotificationEmails, saveServiceAccount, setGoogleMode, testGoogle, writeAlertEmailToSheet,
 } from "@/app/actions/app-settings";
 import { CopyButton, Field, KV, Notice, Warn, type Result } from "@/components/app/basics";
 import { KeyInput, TIMEZONES } from "@/components/app/company-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -137,34 +136,29 @@ export function GoogleSection({ isOwner, mock, mode, oauthEmail, saEmail, connec
 
 // ------------------------------------------------------------------ Access
 
-export function AccessSection({ isOwner, owner, admins }: { isOwner: boolean; owner: string; admins: string[] }) {
-  const { res, busy, run } = useRun();
-  const [email, setEmail] = useState("");
-  const A = T.access;
+/** Access comes from Google Sheets sharing — nothing to manage here except the sheets themselves. */
+export function AccessSection({ owner, companies }: { owner: string; companies: { name: string; sheetUrl: string }[] }) {
   return (
-    <div className="grid gap-4">
-      {!isOwner && <Warn>{T.denied}</Warn>}
-      <ul className="divide-y rounded-xl border">
-        <li className="flex items-center justify-between gap-2 p-3">
-          <span dir="ltr" className="text-sm break-all">{owner}</span> <Badge>{A.owner}</Badge>
-        </li>
-        {admins.map((a) => (
-          <li key={a} className="flex items-center justify-between gap-2 p-3">
-            <span dir="ltr" className="text-sm break-all">{a}</span>
-            <span className="flex items-center gap-2">
-              <Badge variant="secondary">{A.admin}</Badge>
-              {isOwner && <Button size="icon-sm" variant="ghost" aria-label={ar.common.remove + " " + a} onClick={() => run("rm" + a, () => removeAdmin(a))} disabled={!!busy}><TrashIcon /></Button>}
-            </span>
-          </li>
-        ))}
+    <div className="grid gap-4 text-sm">
+      <ul className="grid list-disc gap-1.5 ps-5">
+        <li>أي حساب Google عنده صلاحية <strong>Editor</strong> على شيت أي شركة يقدر يدخل — ويشوف <strong>كل الشركات</strong> بكل الصلاحيات.</li>
+        <li>عشان تضيف حد: افتح شيت الشركة ← <strong>Share</strong> ← ضيف إيميله كـ <strong>Editor</strong>.</li>
+        <li>عشان تشيل حد: شيل الـ Share بتاعه من الشيتات — الدخول بيتقفل عليه خلال 5 دقايق.</li>
+        <li>الـ Viewer (عرض بس) مايقدرش يدخل.</li>
+        <li>صاحب الحساب <span dir="ltr" className="font-mono">{owner}</span> بيدخل دايماً حتى لو مش على أي شيت.</li>
       </ul>
-      {isOwner && (
-        <form className="flex flex-wrap gap-2" onSubmit={async (e) => { e.preventDefault(); const r = await run("add", () => addAdmin(email)); if (r.ok) setEmail(""); }}>
-          <Input dir="ltr" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={A.placeholder} className="max-w-xs" aria-label={A.placeholder} />
-          <Button disabled={!!busy}><Spin on={busy === "add"} /> {ar.common.add}</Button>
-        </form>
-      )}
-      <Notice result={res} />
+      <div className="grid gap-1.5">
+        <h3 className="font-medium">شيتات الشركات (من هنا بتدير مين يدخل)</h3>
+        <ul className="divide-y rounded-lg border">
+          {companies.map((c) => (
+            <li key={c.sheetUrl} className="flex flex-wrap items-center justify-between gap-2 p-2.5">
+              <span>{c.name}</span>
+              <a href={c.sheetUrl} target="_blank" rel="noreferrer" className="text-xs underline">افتح الشيت ← Share</a>
+            </li>
+          ))}
+          {!companies.length && <li className="p-2.5 text-muted-foreground">{ar.companies.empty}</li>}
+        </ul>
+      </div>
     </div>
   );
 }

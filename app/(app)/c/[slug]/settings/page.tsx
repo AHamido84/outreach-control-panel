@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { ar } from "@/content/ar";
 import { Notice, UrlTabs } from "@/components/app/basics";
 import { CompanyKeysForm, type FieldSpec } from "@/components/app/company-form";
@@ -9,11 +8,11 @@ import { AdvancedTab, MondayTab } from "@/components/settings/company-sections-2
 import { ContentTab } from "@/components/settings/content-tab";
 import type { PlainTable } from "@/components/settings/content-editor";
 import { TabsContent } from "@/components/ui/tabs";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor, type Table } from "@/lib/sheets";
 import { COMPANY_KEYS, KNOWN_COMPANY_KEYS, TAB } from "@/lib/sheets/schema";
-import { getCompany, mondayTokenOf, secretInfo } from "@/lib/store/model";
+import { mondayTokenOf, secretInfo } from "@/lib/store/model";
 
 const T = ar.companySettings;
 const TABS = ["profile", "sender", "schedule", "monday", "booking", "content", "advanced"] as const;
@@ -23,11 +22,9 @@ const plain = (t: Table | null): PlainTable | undefined => (t ? { headers: t.hea
 export default async function CompanySettingsPage({ params, searchParams }: {
   params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; sub?: string }>;
 }) {
-  const user = await requireAdmin();
   const { slug } = await params;
   const sp = await searchParams;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c, user } = await requireCompany(slug);
   const tab = TABS.includes(sp.tab as (typeof TABS)[number]) ? sp.tab! : "profile";
 
   let data;

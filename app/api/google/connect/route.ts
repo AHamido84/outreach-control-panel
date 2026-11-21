@@ -9,7 +9,7 @@ import { SHEETS_SCOPE } from "@/lib/google/real";
 /** Mode A: a separate "Connect Google Sheets" consent (offline access, spreadsheets scope). Owner only. */
 export async function GET(req: NextRequest) {
   const u = await currentUser();
-  if (!u || u.role !== "owner") return NextResponse.redirect(new URL("/settings?tab=google&error=owner", req.url));
+  if (!u) return NextResponse.redirect(new URL("/settings?tab=google&error=owner", req.url));
   if (!env.googleClientId || !env.googleClientSecret) return NextResponse.redirect(new URL("/settings?tab=google&error=client", req.url));
   const state = randomBytes(16).toString("base64url");
   (await cookies()).set("ocp_google_state", state, { httpOnly: true, secure: true, sameSite: "lax", path: "/api/google", maxAge: 600 });

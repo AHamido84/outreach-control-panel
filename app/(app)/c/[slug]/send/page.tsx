@@ -1,20 +1,16 @@
-import { notFound } from "next/navigation";
 import { Notice } from "@/components/app/basics";
 import { nowMs, toStr } from "@/components/app/shared";
 import { SendWorkspace, type SendCtx } from "@/components/send/send-workspace";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireCompany } from "@/lib/auth/guards";
 import { boardIdOf_, inSendWindow_ } from "@/lib/engine-port";
 import { SheetsError } from "@/lib/google/transport";
 import { sheetsFor } from "@/lib/sheets";
 import { leads as readLeads } from "@/lib/sheets/queries";
 import { CMD, TAB, yes } from "@/lib/sheets/schema";
-import { getCompany } from "@/lib/store/model";
 
 export default async function SendPage({ params }: { params: Promise<{ slug: string }> }) {
-  await requireAdmin();
   const { slug } = await params;
-  const c = await getCompany(slug);
-  if (!c) notFound();
+  const { company: c } = await requireCompany(slug);
   let ctx: SendCtx;
   try {
     const s = await sheetsFor(c);

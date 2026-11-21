@@ -101,12 +101,9 @@ log("unverified sender instructions shown");
 
 // ---------- app settings
 await go("/settings?tab=access");
-await page.getByLabel("email@example.com").fill("new.admin@example.com");
-await page.getByRole("button", { name: "إضافة" }).click();
-await done(page, "new.admin@example.com");
-await page.getByRole("button", { name: "حذف new.admin@example.com" }).click();
-await page.getByText("new.admin@example.com").waitFor({ state: "detached" });
-log("admin added + removed");
+await done(page, "Editor");
+await done(page, "افتح الشيت ← Share");
+log("access tab explains sheet-sharing access");
 await go("/settings?tab=defaults");
 await page.getByRole("button", { name: "حفظ" }).click();
 await done(page, "اتحفظ ✓");
